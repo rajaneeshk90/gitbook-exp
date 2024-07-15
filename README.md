@@ -34,19 +34,19 @@ The search flow allows consumers to search for available products or services. W
 ```mermaid
 sequenceDiagram
     actor Consumer
-    box BAP-Beckn-ONIX
+    box Beckn-ONIX
     participant BAP
     end
-    box Gateway-Beckn-ONIX
+    box Beckn-ONIX
     participant Gateway as Beckn-Gateway
     end
-    box BPP-Beckn-ONIX
+    box Beckn-ONIX
     participant BPP1
     end
-    box BPP-Beckn-ONIX
+    box Beckn-ONIX
     participant BPP2
     end
-    box BPP-Beckn-ONIX
+    box Beckn-ONIX
     participant BPP3
     end
 
