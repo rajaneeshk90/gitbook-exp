@@ -31,18 +31,38 @@ This section captures the example workflows that may take place between internal
 
 The search flow allows consumers to search for available products or services. When a consumer initiates a search request, the catalog providers relevant products or services available respond to the search request by sending back detailed information about their offerings. This includes product details such as descriptions, images, specifications, prices, and any applicable offers or promotions.
 
+````mermaid
 ```mermaid
 sequenceDiagram
-    Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
-    participant Catalog Management
+    actor Consumer
+    box BAP-Beckn-ONIX
+    participant BAP
     end
-    consumer-->>consumer interface: search 
-    consumer interface->>Catalog Management:declare search intent
-    Catalog Management->>consumer interface:return catalog
-    consumer interface-->>consumer:view search results
+    box Gateway-Beckn-ONIX
+    participant Gateway as Beckn-Gateway
+    end
+    box BPP-Beckn-ONIX
+    participant BPP1
+    end
+    box BPP-Beckn-ONIX
+    participant BPP2
+    end
+    box BPP-Beckn-ONIX
+    participant BPP3
+    end
+
+    Consumer ->> BAP: search
+    BAP ->> Gateway: declare search intent
+    Gateway ->> BPP1: send search intent
+    Gateway ->> BPP2: send search intent
+    Gateway ->> BPP3: send search intent
+    BPP1 ->> BAP: return catalog
+    BAP ->> Consumer: view search results
+    BPP2 ->> BAP: return catalog
+    BPP3 ->> BAP: return catalog
+    BAP ->> Consumer: view search results
 ```
+````
 
 #### 9.2 Catalog Management
 
