@@ -71,14 +71,13 @@ Users while searching for products can request the catalog of the product or the
 ```mermaid
 sequenceDiagram
     participant Admin UI
-    box Beckn-ONIX
-    participant BPP
+    box Beckn-ONIX-BPP
+    participant Catalog-Management
     end
-    Admin UI->> BPP: Sync catalog with Inventory
-    BPP ->> Catalog: Sync catalog with Inventory
-    Catalog -> Inventory: Sync
-    Catalog ->> BPP: Return inventory list
-    BPP ->> Admin UI:Return invetory list
+    Admin UI->> Catalog-Management: update(CRUD) catalog
+    Catalog-Management ->> Catalog: update(CRUD) catalog
+    Catalog ->> Catalog-Management: Return catalog
+    Catalog-Management ->> Admin UI:Return catalog
 ```
 
 
@@ -90,25 +89,13 @@ This enables users to manage inventory of the products also they can add or remo
 ```mermaid
 sequenceDiagram
     participant Admin UI
-    box Beckn-ONIX
-    participant BPP
+    box Beckn-ONIX-BPP
+    participant Inventory-Management
     end
-    Admin UI->> BPP: fetch inventory list
-    BPP ->> Inventory: fetch inventory list
-    Inventory ->> BPP: return inventory list
-    BPP ->> Admin UI:Return invetory list
-    Admin UI->> BPP: Add inventory
-    BPP ->> Inventory: Add inventory
-    Inventory ->> BPP: Return Ack
-    BPP ->> Admin UI:Return Ack
-    Admin UI->> BPP: Update inventory
-    BPP ->> Inventory: Update inventory
-    Inventory ->> BPP: Return Ack
-    BPP ->> Admin UI:Return Ack
-    Admin UI->> BPP: Delete inventory
-    BPP ->> Inventory: Delete inventory
-    Inventory ->> BPP: Return Ack
-    BPP ->> Admin UI:Return Ack
+    Admin UI->> Inventory-Management: Update(CRUD) inventory list
+    Inventory-Management ->> Inventory: Update(CRUD) inventory list
+    Inventory ->> Inventory-Management: Return inventory list
+    Inventory-Management ->> Admin UI: Return invetory list
 ```
 
 #### 9.4 Quotation Management
@@ -126,19 +113,19 @@ This internal workflow allows the consumer to have control and flexibility in se
 ```mermaid
 sequenceDiagram
     Actor consumer
-    box Beckn-ONIX
-    participant BAP
+    box Beckn-ONIX-BAP
+    participant BAP Quotation Management
     end
     box Beckn-ONIX:BPP
     participant Quotation Management
     participant Inventory Management
     end
-    consumer-->>BAP: select items <br/> from catalog
-    BAP->>Quotation Management:request <br/> quote
+    consumer-->>BAP Quotation Management: select items <br/> from catalog
+    BAP Quotation Management->>Quotation Management:request <br/> quote
     Quotation Management->>Inventory Management: check availability
     Inventory Management->>Quotation Management: return availability
-    Quotation Management->>BAP:return quote <br/> with breakup
-    BAP-->>consumer: view quote <br/> with breakup
+    Quotation Management->>BAP Quotation Management:return quote <br/> with breakup
+    BAP Quotation Management-->>consumer: view quote <br/> with breakup
 ```
 
 #### 9.5 Initializing an order by providing billing and fulfillment details
@@ -154,8 +141,8 @@ Alongside the payment link, the provider platform communicates any specific term
 ```mermaid
 sequenceDiagram
     Actor consumer
-    box BAP
-    participant BAP
+    box Beckn-ONIX-BAP
+    participant BAP-Terms-Management
     end
     box Beckn-ONIX-BPP
     participant Order Management
@@ -164,8 +151,8 @@ sequenceDiagram
     participant Quotation Management
     participant Fulfillment Management
     end
-    consumer-->>BAP: provide billing <br/> and fulfillment details
-    BAP->>Order Management: initialize <br/> draft order
+    consumer-->>BAP-Terms-Management: provide billing <br/> and fulfillment details
+    BAP-Terms-Management->>Order Management: initialize <br/> draft order
     Order Management->>Inventory Management: check availability
     Inventory Management->>Order Management: return availability
     Order Management->>Inventory Management: lock inventory
@@ -175,9 +162,8 @@ sequenceDiagram
     Order Management->>Fulfillment Management: check serviceability
     Fulfillment Management->>Order Management: return serviceability <br/> with fulfillment charges
     Order Management->>Terms Management: fetch Payment Terms, <br/> Cancellation Terms, <br/> Fulfillment Terms
-    
-Order Management->>BAP: return draft <br/> order with terms 
-    BAP-->>consumer:view final order <br/> with checkout link
+    Order Management->>BAP-Terms-Management: return draft <br/> order with terms 
+    BAP-Terms-Management-->>consumer:view final order <br/> with checkout link
 ```
 
 #### 9.6 Confirming an Order
@@ -191,26 +177,26 @@ The consumer can then utilize the order details received from the provider platf
 ```mermaid
 sequenceDiagram
     Actor consumer
-    box Beckn-ONIX
-    participant BAP
+    box Beckn-ONIX-BAP
+    participant BAP-Order-Management
     end
     box Beckn-ONIX-BPP
     participant Order Management
     participant Fulfillment Management
-    participant Payment BB Interface
-    participant E-Signature BB Interface
+    participant Payment BPP Interface
+    participant E-Signature BPP Interface
     end
-    consumer-->>BAP: checkout
-    BAP->>Payment BB Interface: pay for order
-    BAP->>E-Signature BB Interface:sign order
-    BAP->>Order Management:confirm order
-    Order Management->>E-Signature BB Interface:verify signature
+    consumer-->>BAP-Order-Management: checkout
+    BAP-Order-Management->>Payment BPP Interface: pay for order
+    BAP-Order-Management->>E-Signature BPP Interface:sign order
+    BAP-Order-Management->>Order Management:confirm order
+    Order Management->>E-Signature BPP Interface:verify signature
     Order Management->>Order Management: Create Order
     Order Management->>Fulfillment Management: check serviceability
-    Order Management->>E-Signature BB Interface:sign order
-    Order Management->>BAP: Return Confirmed Order
-    BAP->>E-Signature BB Interface:verify signature
-    BAP-->>consumer:view confirmed order
+    Order Management->>E-Signature BPP Interface:sign order
+    Order Management->>BAP-Order-Management: Return Confirmed Order
+    BAP-Order-Management->>E-Signature BPP Interface:verify signature
+    BAP-Order-Management-->>consumer:view confirmed order
 ```
 
 #### 9.7 Checking the status of an order
@@ -288,7 +274,7 @@ Users can request to get the tracking status of an order.
 ```mermaid
 sequenceDiagram
     Actor consumer
-    box BAP
+    box Beckn-ONIX-BAP
     participant BAP
     end
     box Beckn-ONIX-BPP
@@ -320,7 +306,7 @@ sequenceDiagram
     participant Order Management
     participant Terms Management
     participant Fulfillment Management
-    participant Payment BB Interface
+    participant Payment BPP Interface
     end
     consumer-->>BAP: provide updated information
     BAP->>Order Management:update order
@@ -329,7 +315,7 @@ sequenceDiagram
     Order Management->>Fulfillment Management:update fulfillment
     Order Management->>BAP: return updated order
     BAP-->>consumer: display update <br/> order with <br/> update charges
-    Order Management->>Payment BB Interface: Initiate Payment / Refund
+    Order Management->>Payment BPP Interface: Initiate Payment / Refund
 ```
 
 **9.9.2 Provider Initiated Update**
@@ -343,7 +329,7 @@ sequenceDiagram
     box Beckn-ONIX-BPP
     participant Order Management
     participant Fulfillment Management
-    participant Payment BB Interface
+    participant Payment BPP Interface
     end
     participant Agent interface
     Actor Agent
@@ -352,7 +338,7 @@ sequenceDiagram
     Fulfillment Management->>Order Management:update fulfillment
     Order Management->>BAP: send updated order
     BAP-->>consumer: display updated <br/> order
-    Order Management->>Payment BB Interface: (Optionally) Initiate Refund <br/> to consumer
+    Order Management->>Payment BPP Interface: (Optionally) Initiate Refund <br/> to consumer
 ```
 
 #### 9.10 Cancelling an Order
@@ -371,7 +357,7 @@ sequenceDiagram
     participant Order Management
     participant Terms Management
     participant Fulfillment Management
-    participant Payment BB Interface
+    participant Payment BPP Interface
     end
     consumer-->>BAP: cancel order
     BAP->>Order Management:cancel order with reason
@@ -380,7 +366,7 @@ sequenceDiagram
     Order Management->>Fulfillment Management:cancel fulfillment
     Order Management->>BAP: return cancelled order
     BAP-->>consumer: display cancelled <br/> order with <br/> cancellation fees
-    Order Management->>Payment BB Interface: Initiate Refund
+    Order Management->>Payment BPP Interface: Initiate Refund
 ```
 
 **9.10.2 Provider Initiated Cancellation**
@@ -395,7 +381,7 @@ sequenceDiagram
     participant Order Management
     participant Terms Management
     participant Fulfillment Management
-    participant Payment BB Interface
+    participant Payment BPP Interface
     end
     participant Agent interface
     Actor Agent
@@ -404,7 +390,7 @@ sequenceDiagram
     Fulfillment Management->>Order Management:cancel fulfillment
     Order Management->>BAP: return cancelled order
     BAP-->>consumer: display cancelled <br/> order with <br/> cancellation fees
-    Order Management->>Payment BB Interface: Initiate Refund <br/> to consumer
+    Order Management->>Payment BPP Interface: Initiate Refund <br/> to consumer
 ```
 
 #### 9.11 Rating and Feedback Management
