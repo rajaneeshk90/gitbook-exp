@@ -31,7 +31,6 @@ This section captures the example workflows that may take place between internal
 
 The search flow allows consumers to search for available products or services. When a consumer initiates a search request, the catalog providers relevant products or services available respond to the search request by sending back detailed information about their offerings. This includes product details such as descriptions, images, specifications, prices, and any applicable offers or promotions.
 
-````mermaid
 ```mermaid
 sequenceDiagram
     actor Consumer
@@ -62,7 +61,6 @@ sequenceDiagram
     BPP3 ->> BAP: return catalog
     BAP ->> Consumer: view search results
 ```
-````
 
 #### 9.2 Catalog Management
 
