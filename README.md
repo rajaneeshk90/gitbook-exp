@@ -70,12 +70,18 @@ Users while searching for products can request the catalog of the product or the
 
 ```mermaid
 sequenceDiagram
-UI->>consumer platform interface: catalog
-    consumer platform interface->>provider platform interface: catalog
-    provider platform interface->>Catalog:catalog
-    provider platform interface->>consumer platform interface: on_catalog
-    consumer platform interface->>UI: catalog Response
+    participant Admin UI
+    box Beckn-ONIX
+    participant BPP
+    end
+    Admin UI->> BPP: Sync catalog with Inventory
+    BPP ->> Catalog: Sync catalog with Inventory
+    Catalog -> Inventory: Sync
+    Catalog ->> BPP: Return inventory list
+    BPP ->> Admin UI:Return invetory list
 ```
+
+
 
 #### 9.3 Inventory Management
 
@@ -83,11 +89,26 @@ This enables users to manage inventory of the products also they can add or remo
 
 ```mermaid
 sequenceDiagram
-    
-Admin UI->>provider interface: fetch inventory list
-provider interface->>Inventory: fetch inventory list
-Inventory->>provider interface: return inventory list
-provider interface->>Admin UI:Return invetory list
+    participant Admin UI
+    box Beckn-ONIX
+    participant BPP
+    end
+    Admin UI->> BPP: fetch inventory list
+    BPP ->> Inventory: fetch inventory list
+    Inventory ->> BPP: return inventory list
+    BPP ->> Admin UI:Return invetory list
+    Admin UI->> BPP: Add inventory
+    BPP ->> Inventory: Add inventory
+    Inventory ->> BPP: Return Ack
+    BPP ->> Admin UI:Return Ack
+    Admin UI->> BPP: Update inventory
+    BPP ->> Inventory: Update inventory
+    Inventory ->> BPP: Return Ack
+    BPP ->> Admin UI:Return Ack
+    Admin UI->> BPP: Delete inventory
+    BPP ->> Inventory: Delete inventory
+    Inventory ->> BPP: Return Ack
+    BPP ->> Admin UI:Return Ack
 ```
 
 #### 9.4 Quotation Management
@@ -105,17 +126,19 @@ This internal workflow allows the consumer to have control and flexibility in se
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX:BPP
     participant Quotation Management
     participant Inventory Management
     end
-    consumer-->>consumer interface: select items <br/> from catalog
-    consumer interface->>Quotation Management:request <br/> quote
+    consumer-->>BAP: select items <br/> from catalog
+    BAP->>Quotation Management:request <br/> quote
     Quotation Management->>Inventory Management: check availability
     Inventory Management->>Quotation Management: return availability
-    Quotation Management->>consumer interface:return quote <br/> with breakup
-    consumer interface-->>consumer: view quote <br/> with breakup
+    Quotation Management->>BAP:return quote <br/> with breakup
+    BAP-->>consumer: view quote <br/> with breakup
 ```
 
 #### 9.5 Initializing an order by providing billing and fulfillment details
@@ -131,16 +154,18 @@ Alongside the payment link, the provider platform communicates any specific term
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box BAP
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Order Management
     participant Terms Management
     participant Inventory Management
     participant Quotation Management
     participant Fulfillment Management
     end
-    consumer-->>consumer interface: provide billing <br/> and fulfillment details
-    consumer interface->>Order Management: initialize <br/> draft order
+    consumer-->>BAP: provide billing <br/> and fulfillment details
+    BAP->>Order Management: initialize <br/> draft order
     Order Management->>Inventory Management: check availability
     Inventory Management->>Order Management: return availability
     Order Management->>Inventory Management: lock inventory
@@ -151,11 +176,8 @@ sequenceDiagram
     Fulfillment Management->>Order Management: return serviceability <br/> with fulfillment charges
     Order Management->>Terms Management: fetch Payment Terms, <br/> Cancellation Terms, <br/> Fulfillment Terms
     
-Order Management->>consumer interface: return draft <br/> order with terms 
-    consumer interface-->>consumer:view final order <br/> with checkout link
-
-            
-
+Order Management->>BAP: return draft <br/> order with terms 
+    BAP-->>consumer:view final order <br/> with checkout link
 ```
 
 #### 9.6 Confirming an Order
@@ -169,28 +191,26 @@ The consumer can then utilize the order details received from the provider platf
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Order Management
     participant Fulfillment Management
     participant Payment BB Interface
     participant E-Signature BB Interface
     end
-    consumer-->>consumer interface: checkout
-    consumer interface->>Payment BB Interface: pay for order
-    consumer interface->>E-Signature BB Interface:sign order
-    consumer interface->>Order Management:confirm order
+    consumer-->>BAP: checkout
+    BAP->>Payment BB Interface: pay for order
+    BAP->>E-Signature BB Interface:sign order
+    BAP->>Order Management:confirm order
     Order Management->>E-Signature BB Interface:verify signature
     Order Management->>Order Management: Create Order
     Order Management->>Fulfillment Management: check serviceability
     Order Management->>E-Signature BB Interface:sign order
-    Order Management->>consumer interface: Return Confirmed Order
-    consumer interface->>E-Signature BB Interface:verify signature
-    consumer interface-->>consumer:view confirmed order
-
-
-     
-
+    Order Management->>BAP: Return Confirmed Order
+    BAP->>E-Signature BB Interface:verify signature
+    BAP-->>consumer:view confirmed order
 ```
 
 #### 9.7 Checking the status of an order
@@ -202,17 +222,19 @@ Once an order is confirmed, the user receives the details of the confirmed order
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Order Management
     participant Fulfillment Management
     end
-    consumer-->>consumer interface: view order
-    consumer interface->>Order Management:get order status
+    consumer-->>BAP: view order
+    BAP->>Order Management:get order status
     Order Management->>Fulfillment Management:fetch fulfillment state
     Fulfillment Management->>Order Management: return current status <br/> of fulfillment
-    Order Management->>consumer interface: return latest order state
-    consumer interface-->>consumer: display latest status of order
+    Order Management->>BAP: return latest order state
+    BAP-->>consumer: display latest status of order
 ```
 
 **9.7.2 Provider's Agent asynchronously updates the fulfillment status of an order at their end**
@@ -220,8 +242,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Order Management
     participant Fulfillment Management
     end
@@ -230,8 +254,8 @@ sequenceDiagram
     Agent -->> Agent Interface: update fulfillment status
     Agent Interface-->>Fulfillment Management: Update fulfillment status
     Fulfillment Management->>Order Management: update current status <br/> of fulfillment
-    Order Management->>consumer interface: return latest order state
-    consumer interface-->>consumer: display latest status of order
+    Order Management->>BAP: return latest order state
+    BAP-->>consumer: display latest status of order
 ```
 
 #### 9.8 Tracking the fulfillment of an order
@@ -246,7 +270,7 @@ Users can update the tracking status of an order.
 
 ```mermaid
 sequenceDiagram
-    box E-Marketplace BB
+    box Beckn-ONIX-BPP
     participant Tracking Management
     end
     participant Agent interface
@@ -264,21 +288,22 @@ Users can request to get the tracking status of an order.
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box BAP
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Order Management
     participant Tracking Management
     end
-    consumer-->>consumer interface: track order
-    consumer interface->>Order Management: track order
+    consumer-->>BAP: track order
+    BAP->>Order Management: track order
     Order Management->>Tracking Management: track order
     Order Management->> Tracking Management: fetch tracking link
-    Order Management->> consumer interface: send tracking link
-    consumer interface-->>consumer: render real-time <br/> tracking screen
-    consumer interface-->>Tracking Management: start tracking
-    Tracking Management-->>consumer interface: stream real-time tracking data
-    consumer interface-->>consumer: view real-time <br/> tracking data
-    
+    Order Management->> BAP: send tracking link
+    BAP-->>consumer: render real-time <br/> tracking screen
+    BAP-->>Tracking Management: start tracking
+    Tracking Management-->>BAP: stream real-time tracking data
+    BAP-->>consumer: view real-time <br/> tracking data
 ```
 
 #### 9.9 Updating an Order
@@ -288,20 +313,22 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Order Management
     participant Terms Management
     participant Fulfillment Management
     participant Payment BB Interface
     end
-    consumer-->>consumer interface: provide updated information
-    consumer interface->>Order Management:update order
+    consumer-->>BAP: provide updated information
+    BAP->>Order Management:update order
     Order Management->>Terms Management:validate <br/> update terms
     Terms Management->>Order Management: return <br/> update charges
     Order Management->>Fulfillment Management:update fulfillment
-    Order Management->>consumer interface: return updated order
-    consumer interface-->>consumer: display update <br/> order with <br/> update charges
+    Order Management->>BAP: return updated order
+    BAP-->>consumer: display update <br/> order with <br/> update charges
     Order Management->>Payment BB Interface: Initiate Payment / Refund
 ```
 
@@ -310,8 +337,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Order Management
     participant Fulfillment Management
     participant Payment BB Interface
@@ -321,8 +350,8 @@ sequenceDiagram
     Agent-->>Agent interface: update order information
     Agent interface->>Fulfillment Management:update order state
     Fulfillment Management->>Order Management:update fulfillment
-    Order Management->>consumer interface: send updated order
-    consumer interface-->>consumer: display updated <br/> order
+    Order Management->>BAP: send updated order
+    BAP-->>consumer: display updated <br/> order
     Order Management->>Payment BB Interface: (Optionally) Initiate Refund <br/> to consumer
 ```
 
@@ -335,20 +364,22 @@ When a consumer places an order and it is confirmed, they are provided with the 
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Order Management
     participant Terms Management
     participant Fulfillment Management
     participant Payment BB Interface
     end
-    consumer-->>consumer interface: cancel order
-    consumer interface->>Order Management:cancel order with reason
+    consumer-->>BAP: cancel order
+    BAP->>Order Management:cancel order with reason
     Order Management->>Terms Management:validate <br/> cancellation terms
     Terms Management->>Order Management: return <br/> cancellation charges
     Order Management->>Fulfillment Management:cancel fulfillment
-    Order Management->>consumer interface: return cancelled order
-    consumer interface-->>consumer: display cancelled <br/> order with <br/> cancellation fees
+    Order Management->>BAP: return cancelled order
+    BAP-->>consumer: display cancelled <br/> order with <br/> cancellation fees
     Order Management->>Payment BB Interface: Initiate Refund
 ```
 
@@ -357,8 +388,10 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Order Management
     participant Terms Management
     participant Fulfillment Management
@@ -369,10 +402,9 @@ sequenceDiagram
     Agent-->>Agent interface: cancel fulfillment
     Agent interface->>Fulfillment Management:cancel fulfillment with reason
     Fulfillment Management->>Order Management:cancel fulfillment
-    Order Management->>consumer interface: return cancelled order
-    consumer interface-->>consumer: display cancelled <br/> order with <br/> cancellation fees
+    Order Management->>BAP: return cancelled order
+    BAP-->>consumer: display cancelled <br/> order with <br/> cancellation fees
     Order Management->>Payment BB Interface: Initiate Refund <br/> to consumer
-
 ```
 
 #### 9.11 Rating and Feedback Management
@@ -384,16 +416,18 @@ This allows users to rate any rate-able entity in the system, it can be a produc
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Rating Management
     end
-    consumer interface->>Rating Management: fetch rateable entities
-    Rating Management->>consumer interface: Return rateable entities
-    consumer-->>consumer interface: provide rating
-    consumer interface->>Rating Management: rate entity
-    Rating Management->>consumer interface: Acknowledge rating
- 
+    BAP->>Rating Management: fetch rateable entities
+    Rating Management->>BAP: Return rateable entities
+    consumer-->>BAP: provide rating
+    BAP->>Rating Management: rate entity
+    Rating Management->>BAP: Acknowledge rating
+
 ```
 
 **9.11.2 Rating an order with feedback**
@@ -401,21 +435,23 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Rating Management
     participant Feedback Management
     end
-    consumer interface->>Rating Management: fetch rateable entities
-    Rating Management->>consumer interface: Return rateable entities
-    consumer-->>consumer interface: provide rating
-    consumer interface->>Rating Management: rate entity
+    BAP->>Rating Management: fetch rateable entities
+    Rating Management->>BAP: Return rateable entities
+    consumer-->>BAP: provide rating
+    BAP->>Rating Management: rate entity
     Rating Management->>Feedback Management: fetch form link
-    Rating Management->>consumer interface: Acknowledge rating with <br/> link to feedback form
-    consumer interface-->>consumer: Display feedback form
-    consumer-->>consumer interface: provide feedback
-    consumer interface->>Feedback Management: Submit feedback
-    Feedback Management->>consumer interface: Acknowledge feedback
+    Rating Management->>BAP: Acknowledge rating with <br/> link to feedback form
+    BAP-->>consumer: Display feedback form
+    consumer-->>BAP: provide feedback
+    BAP->>Feedback Management: Submit feedback
+    Feedback Management->>BAP: Acknowledge feedback
 ```
 
 #### 9.12 Support Management
@@ -425,24 +461,25 @@ Users can request support, this can happen anytime during the lifecycle of an or
 ```mermaid
 sequenceDiagram
     Actor consumer
-    participant consumer interface
-    box E-Marketplace BB
+    box Beckn-ONIX
+    participant BAP
+    end
+    box Beckn-ONIX-BPP
     participant Support Management
     participant Order Management
     end
     participant Customer Support Interface
     Actor customer support executive
-    consumer-->>consumer interface: contact support
-    consumer interface->>Support Management: fetch support info
+    consumer-->>BAP: contact support
+    BAP->>Support Management: fetch support info
     Support Management->>Order Management: fetch order
     Order Management->>Support Management: order details
-    Support Management->> consumer interface: send support center info
-    consumer interface-->>consumer: render support <br/> center screen
-    consumer interface->>Support Management: start chat session
+    Support Management->> BAP: send support center info
+    BAP-->>consumer: render support <br/> center screen
+    BAP->>Support Management: start chat session
     Support Management->>Support Management: Allocate executive
     Support Management->>Customer Support Interface: Notify executive
     Customer Support Interface-->>customer support executive: Open chat session
-    Customer Support Interface-->>consumer interface: stream real-time chat data
-    consumer interface-->>Customer Support Interface: stream real-time chat data
-    
+    Customer Support Interface-->>BAP: stream real-time chat data
+    BAP-->>Customer Support Interface: stream real-time chat data
 ```
